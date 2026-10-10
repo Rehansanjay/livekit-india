@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "livekit-india"
+version = "0.1.0"
+description = "Production helpers for LiveKit voice agents on Indian phone lines: TRAI compliance checks, Exotel/Plivo trunk presets, Tamil/Hindi turn-taking."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "Rehan Sanjay Venkatesan" }]
+keywords = ["livekit", "livekit-agents", "voice-agent", "india", "trai", "dlt", "exotel", "plivo", "sip", "tamil", "hindi", "turn-detection"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Communications :: Telephony",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
+dependencies = ["livekit-api>=1.0"]
+
+[project.optional-dependencies]
+agents = ["livekit-agents[silero,turn-detector]>=1.8"]
+tamil = ["smart-turn-livekit[livekit]>=0.4"]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "livekit-agents[silero,turn-detector]>=1.8", "smart-turn-livekit[livekit]>=0.4"]
+
+[project.urls]
+Homepage = "https://github.com/Rehansanjay/livekit-india"
+Issues = "https://github.com/Rehansanjay/livekit-india/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/livekit_india"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["src"]
