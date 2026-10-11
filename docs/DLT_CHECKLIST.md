@@ -45,7 +45,8 @@ mobile format, and warns when the caller ID series doesn't match the purpose.
       4590 means media left India).
 - [ ] Ask your carrier to allow-list LiveKit's India egress ranges
       (`LIVEKIT_INDIA_EGRESS_CIDRS`). Outbound calls that time out with no SIP
-      response usually mean this step is missing.
+      response usually mean this step is missing. (Exotel's trunk ACLs only take
+      single /32 IPs, so use digest credentials with Exotel instead.)
 
 ## Penalties to know about
 

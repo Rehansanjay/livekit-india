@@ -69,36 +69,39 @@ class CarrierPreset:
     def setup_steps(self, project: Optional[str] = None) -> list[str]:
         """The checklist with your project's India SIP URI filled in."""
         uri = india_sip_uri(project, self.transport) if project else "<your India SIP URI>"
+        host = india_sip_host(project) if project else "<your India SIP host>"
         cidrs = ", ".join(LIVEKIT_INDIA_EGRESS_CIDRS)
-        return [step.format(uri=uri, cidrs=cidrs) for step in self.checklist]
+        return [step.format(uri=uri, host=host, cidrs=cidrs) for step in self.checklist]
 
 
 EXOTEL = CarrierPreset(
     key="exotel",
-    name="Exotel (vSIP)",
-    transport="tcp",
-    outbound_auth="ip_allowlist",
+    name="Exotel (Dynamic SIP Trunking)",
+    transport="tls",
+    outbound_auth="credentials",
     checklist=(
-        "Get a contracted, KYC-completed Exotel account; SIP trunking needs both.",
-        "Email hello@exotel.com with your LiveKit SIP URI ({uri}) and your Exophone; "
-        "Exotel configures the inbound mapping.",
-        "In LiveKit: create an inbound trunk for the Exophone (exactly as Exotel sends it, +91...) "
-        "and a dispatch rule to your agent.",
-        "Outbound: ask Exotel whether SIP outbound (vSIP) is enabled on your account. Some accounts "
-        "only support outbound through Exotel's call API.",
-        "If SIP outbound is enabled: ask Exotel to allow-list LiveKit's India egress ranges ({cidrs}) "
-        "and create a LiveKit outbound trunk to Exotel's SIP gateway with destination_country='in'.",
+        "Have a KYC-completed Exotel account, a DID in E.164 (+91...) and Exotel API credentials "
+        "(API base https://api.in.exotel.com).",
+        "Exotel API: create a trunk and map your DID to it (keep the trunk_sid).",
+        "Inbound: add a destination URI on the trunk: {host}:5061;transport=tls.",
+        "Inbound: in the Exotel Flow's Connect applet, set 'Dial whom' to sip:<trunk_sid> "
+        "(not a full SIP URI), and map the DID to the Flow.",
+        "In LiveKit: create an inbound trunk with the DID in E.164 and a dispatch rule to your agent.",
+        "Outbound: POST credentials to the Exotel trunk (user_name, password), then create a LiveKit "
+        "outbound trunk to the Exotel edge Exotel assigns you (e.g. in.voip.exotel.com:5070 TCP or "
+        ":443 TLS) with the same username/password and destination_country='in'.",
     ),
     gotchas=(
-        "Exotel asks for an FQDN and port: give the India host without 'sip:' and TCP port 5060.",
-        "SIP outbound is not enabled on every Exotel account; check before building on it.",
-        "Exotel only accepts outbound SIP from allow-listed static IPs.",
-        "Media and signalling cannot leave India on SIP trunks.",
-        "Exotel's WebSocket Voicebot applet is an alternative that skips SIP onboarding.",
+        "Use digest credentials for outbound. Exotel trunk IP ACLs take single /32 IPs only, not "
+        "CIDR ranges, so don't rely on allow-listing LiveKit's egress ranges.",
+        "403 or code 4001 on outbound: check credentials, the edge IP:port and E.164 numbers.",
+        "Phone rings but no bot audio: no agent has joined the room with the SIP participant.",
+        "Connect applet fails: 'Dial whom' must be sip:<trunk_sid> only.",
+        "Media and signalling cannot leave India: use the India-pinned LiveKit host.",
     ),
     sources=(
-        "https://support.exotel.com/support/solutions/articles/3000134145",
-        "https://developer.exotel.com/docs/sip-trunking/flow-api-configuration",
+        "https://docs.exotel.com/exotel-agentstream/connect-exotel-sip-trunk-to-livekit",
+        "https://github.com/exotel/AgentStream-VoiceAIEcosystem",
         "https://github.com/livekit/sip/issues/428",
     ),
 )

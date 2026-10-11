@@ -44,13 +44,23 @@ def test_carrier_lookup():
 
 
 def test_setup_steps_fill_in_uri_and_cidrs():
-    steps = EXOTEL.setup_steps("p_abc123")
+    steps = BYO.setup_steps("p_abc123")
     joined = " ".join(steps)
     assert "sip:abc123.india.sip.livekit.cloud;transport=tcp" in joined
     for cidr in LIVEKIT_INDIA_EGRESS_CIDRS:
         assert cidr in joined
     assert "{" not in joined  # every placeholder was filled
     assert "<your India SIP URI>" in PLIVO.setup_steps()[1]
+
+
+def test_exotel_steps_follow_exotel_guide():
+    joined = " ".join(EXOTEL.setup_steps("p_abc123"))
+    assert "abc123.india.sip.livekit.cloud:5061;transport=tls" in joined
+    assert "sip:<trunk_sid>" in joined
+    assert "{" not in joined
+    # Exotel ACLs take /32 IPs only, so the preset must not tell people to allow-list CIDRs
+    for cidr in LIVEKIT_INDIA_EGRESS_CIDRS:
+        assert cidr not in joined
 
 
 def test_byo_preset_is_marked_unverified():
@@ -73,8 +83,18 @@ def test_plivo_outbound_requires_credentials():
         outbound_trunk("plivo", name="x", address="abc.zt.plivo.com", numbers=["+918000000000"])
 
 
-def test_exotel_outbound_works_without_credentials():
-    t = outbound_trunk("exotel", name="exo", address="gw.example:5070", numbers=["+918000000000"])
+def test_exotel_outbound_uses_digest_credentials():
+    with pytest.raises(ValueError):
+        outbound_trunk("exotel", name="exo", address="in.voip.exotel.com:443", numbers=["+918000000000"])
+    t = outbound_trunk(
+        "exotel", name="exo", address="in.voip.exotel.com:443",
+        numbers=["+918000000000"], auth_username="u", auth_password="p",
+    )
+    assert t.transport == api.SIPTransport.SIP_TRANSPORT_TLS and t.destination_country == "in"
+
+
+def test_byo_outbound_works_without_credentials():
+    t = outbound_trunk("byo", name="b", address="gw.example:5070", numbers=["+918000000000"])
     assert t.auth_username == "" and t.destination_country == "in"
 
 
