@@ -82,11 +82,16 @@ EXOTEL = CarrierPreset(
         "Get a contracted, KYC-completed Exotel account; SIP trunking needs both.",
         "Email hello@exotel.com with your LiveKit SIP URI ({uri}) and your Exophone; "
         "Exotel configures the inbound mapping.",
-        "Ask Exotel to allow-list LiveKit's India egress ranges for outbound: {cidrs}.",
-        "In LiveKit: create an inbound trunk for the Exophone and a dispatch rule to your agent.",
-        "In LiveKit: create an outbound trunk to Exotel's SIP gateway with destination_country='in'.",
+        "In LiveKit: create an inbound trunk for the Exophone (exactly as Exotel sends it, +91...) "
+        "and a dispatch rule to your agent.",
+        "Outbound: ask Exotel whether SIP outbound (vSIP) is enabled on your account. Some accounts "
+        "only support outbound through Exotel's call API.",
+        "If SIP outbound is enabled: ask Exotel to allow-list LiveKit's India egress ranges ({cidrs}) "
+        "and create a LiveKit outbound trunk to Exotel's SIP gateway with destination_country='in'.",
     ),
     gotchas=(
+        "Exotel asks for an FQDN and port: give the India host without 'sip:' and TCP port 5060.",
+        "SIP outbound is not enabled on every Exotel account; check before building on it.",
         "Exotel only accepts outbound SIP from allow-listed static IPs.",
         "Media and signalling cannot leave India on SIP trunks.",
         "Exotel's WebSocket Voicebot applet is an alternative that skips SIP onboarding.",
@@ -94,6 +99,7 @@ EXOTEL = CarrierPreset(
     sources=(
         "https://support.exotel.com/support/solutions/articles/3000134145",
         "https://developer.exotel.com/docs/sip-trunking/flow-api-configuration",
+        "https://github.com/livekit/sip/issues/428",
     ),
 )
 
